@@ -24,9 +24,20 @@
     padding:32px 20px 80px;
   }
   .wrap{max-width:760px;margin:0 auto;}
-  header{margin-bottom:24px;}
+  header{margin-bottom:20px;}
   header h1{margin:0 0 4px;font-size:22px;letter-spacing:0.2px;}
   header p{margin:0;font-size:13px;color:var(--muted);}
+
+  /* ---------- Tabs ---------- */
+  .tab-bar{display:flex;gap:4px;margin-bottom:24px;border-bottom:1px solid var(--border);}
+  .tab-btn{
+    padding:10px 18px;border:none;background:transparent;
+    font-size:14px;font-weight:700;color:var(--muted);cursor:pointer;font-family:inherit;
+    border-bottom:3px solid transparent;margin-bottom:-1px;
+  }
+  .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block;}
 
   .panel{
     background:var(--panel);
@@ -60,7 +71,20 @@
   .hint{font-size:12px;color:var(--muted);margin-top:4px;}
   .error{font-size:12.5px;color:#b3261e;margin-top:8px;}
 
-  /* ---------- Label preview (also used for print) ---------- */
+  /* Segmented toggle (reused for layout selection) */
+  .seg-toggle{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:14px;}
+  .seg-toggle button{
+    flex:1;padding:10px;border:none;background:#fbfaf6;color:var(--muted);
+    font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;
+  }
+  .seg-toggle button.active{background:var(--accent);color:#fff;}
+
+  .preview-note{font-size:12.5px;color:var(--muted);margin-bottom:14px;}
+
+  /* =========================================================
+     TPL TO OUTLET - carton label preview (unchanged from the
+     original standalone tool; only wrapped in a tab panel)
+     ========================================================= */
   #labelsWrap{display:none;}
   #labelsWrap.visible{display:block;}
 
@@ -114,14 +138,70 @@
   .label .val{ justify-content:center; text-align:center; }
   .label .val.left{ justify-content:flex-start; text-align:left; }
 
-  .preview-note{font-size:12.5px;color:var(--muted);margin-bottom:14px;}
+  @media print{
+    body.printing-outlet #labelsWrap{display:block !important;}
+  }
+
+  /* =========================================================
+     TPL TO MIS - landscape/portrait carton label pages
+     ========================================================= */
+  #misLabelsWrap{display:none;}
+  #misLabelsWrap.visible{display:block;}
+
+  .mis-page{
+    background:#fff;
+    box-shadow:0 2px 10px rgba(0,0,0,0.15);
+    margin:0 auto 20px;
+    box-sizing:border-box;
+    display:flex;
+    flex-direction:column;
+    gap:6mm;
+    break-after:page;
+    page-break-after:always;
+  }
+  .mis-page:last-child{
+    break-after:auto;
+    page-break-after:auto;
+  }
+  .mis-page.landscape{ width:297mm; height:210mm; padding:19.05mm 6.35mm; }
+  .mis-page.portrait{ width:210mm; height:297mm; padding:19.05mm 6.35mm; }
+
+  .mis-block{
+    width:100%;
+    border:0.6mm solid #000;
+    display:grid;
+    grid-template-columns:30.16% 46.57% 7.76% 7.76% 7.76%;
+    grid-template-rows:repeat(5, 1fr);
+    font-family:Calibri,"Segoe UI",Arial,Helvetica,sans-serif;
+    font-weight:700;
+    color:#000;
+    background:#fff;
+    box-sizing:border-box;
+    flex:0 0 auto;
+  }
+  .mis-cell{
+    display:flex;
+    align-items:center;
+    overflow:hidden;
+    white-space:nowrap;
+    padding:0 1.4%;
+  }
+  .mis-cell.label{ justify-content:flex-start; }
+  .mis-cell.value{ justify-content:flex-start; text-align:left; }
+  .mis-cell.value.wrap{ white-space:normal; line-height:1.12; }
+  .mis-cell.counter{ justify-content:center; text-align:center; border:0.4mm solid #000; }
+  .mis-cell.blank{ border:0.4mm solid #000; }
+
+  @media print{
+    body.printing-mis{background:#fff;padding:0;margin:0;}
+    body.printing-mis #misLabelsWrap{display:block !important;}
+    .mis-page{box-shadow:none;margin:0;}
+  }
 
   @media print{
     body{background:#fff;padding:0;margin:0;}
     .no-print{display:none !important;}
     .wrap{max-width:none;padding:0;margin:0;}
-    #labelsWrap{display:block !important;}
-    @page{margin:12mm;}
   }
 </style>
 </head>
@@ -134,69 +214,139 @@
     <p>Fill in shipment details, generate carton labels, then print.</p>
   </header>
 
-  <div class="panel no-print">
-    <h2>Shipment Details</h2>
+  <div class="tab-bar no-print">
+    <button class="tab-btn active" id="tabBtnOutlet" type="button">TPL to Outlet</button>
+    <button class="tab-btn" id="tabBtnMis" type="button">TPL to MIS</button>
+  </div>
 
-    <div class="grid2">
-      <div class="field">
-        <label>From</label>
-        <input type="text" id="f_from" placeholder="e.g. SHBN" value="SHBN">
+  <!-- ================= TPL TO OUTLET (original tool, unchanged) ================= -->
+  <div id="tplOutletTab" class="tab-panel active">
+
+    <div class="panel no-print">
+      <h2>Shipment Details</h2>
+
+      <div class="grid2">
+        <div class="field">
+          <label>From</label>
+          <input type="text" id="f_from" placeholder="e.g. SHBN" value="SHBN">
+        </div>
+        <div class="field">
+          <label>To</label>
+          <input type="text" id="f_to" placeholder="e.g. SHPL">
+        </div>
       </div>
+
+      <div class="grid2">
+        <div class="field">
+          <label>ODO / PO</label>
+          <input type="text" id="f_odo" placeholder="e.g. 8000228923">
+        </div>
+        <div class="field">
+          <label>Dept</label>
+          <input type="text" id="f_dept" placeholder="e.g. BEVERAGE">
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="field">
+          <label>Date</label>
+          <input type="date" id="f_date">
+        </div>
+        <div class="field">
+          <label>Total Carton</label>
+          <input type="number" id="f_total" min="1" step="1" placeholder="e.g. 10">
+        </div>
+      </div>
+
       <div class="field">
-        <label>To</label>
-        <input type="text" id="f_to" placeholder="e.g. SHPL">
+        <label>Remark</label>
+        <textarea id="f_remark" placeholder="Optional remark"></textarea>
+      </div>
+
+      <div id="formError" class="error"></div>
+
+      <div class="btn-row">
+        <button class="btn btn-ghost" id="clearBtn" type="button">Clear</button>
+        <button class="btn btn-primary" id="generateBtn" type="button">Generate Labels</button>
       </div>
     </div>
 
-    <div class="grid2">
-      <div class="field">
-        <label>ODO / PO</label>
-        <input type="text" id="f_odo" placeholder="e.g. 8000228923">
-      </div>
-      <div class="field">
-        <label>Dept</label>
-        <input type="text" id="f_dept" placeholder="e.g. BEVERAGE">
+    <div class="panel no-print" id="printPanel" style="display:none;">
+      <h2>Preview</h2>
+      <p class="preview-note" id="previewNote"></p>
+      <div class="btn-row">
+        <button class="btn btn-ghost" id="editBtn" type="button">&larr; Edit Details</button>
+        <button class="btn btn-primary" id="printBtn" type="button">&#128424; Print</button>
       </div>
     </div>
 
-    <div class="grid2">
-      <div class="field">
-        <label>Date</label>
-        <input type="date" id="f_date">
+    <div id="labelsWrap"></div>
+
+  </div>
+
+  <!-- ================= TPL TO MIS (new tool) ================= -->
+  <div id="tplMisTab" class="tab-panel">
+
+    <div class="panel no-print">
+      <h2>Shipment Details</h2>
+
+      <div class="grid2">
+        <div class="field">
+          <label>Send To</label>
+          <input type="text" id="m_sendTo" placeholder="e.g. MIS TECHNICIAN">
+        </div>
+        <div class="field">
+          <label>From</label>
+          <input type="text" id="m_from" placeholder="e.g. SHBN" value="SHBN">
+        </div>
       </div>
+
+      <div class="field">
+        <label>S2B Ref No.</label>
+        <input type="text" id="m_s2b" placeholder="e.g. HWR12813-072026">
+      </div>
+
+      <div class="field">
+        <label>Remark</label>
+        <textarea id="m_remark" placeholder="Optional remark"></textarea>
+      </div>
+
       <div class="field">
         <label>Total Carton</label>
-        <input type="number" id="f_total" min="1" step="1" placeholder="e.g. 10">
+        <input type="number" id="m_total" min="1" step="1" placeholder="e.g. 10">
+      </div>
+
+      <label>Layout</label>
+      <div class="seg-toggle">
+        <button type="button" class="active" data-layout="landscape" id="m_layoutLandscapeBtn">Landscape &mdash; 2 per page</button>
+        <button type="button" data-layout="portrait" id="m_layoutPortraitBtn">Portrait &mdash; 4 per page</button>
+      </div>
+
+      <div id="m_formError" class="error"></div>
+
+      <div class="btn-row">
+        <button class="btn btn-ghost" id="m_clearBtn" type="button">Clear</button>
+        <button class="btn btn-primary" id="m_generateBtn" type="button">Generate Labels</button>
       </div>
     </div>
 
-    <div class="field">
-      <label>Remark</label>
-      <textarea id="f_remark" placeholder="Optional remark"></textarea>
+    <div class="panel no-print" id="m_printPanel" style="display:none;">
+      <h2>Preview</h2>
+      <p class="preview-note" id="m_previewNote"></p>
+      <div class="btn-row">
+        <button class="btn btn-ghost" id="m_editBtn" type="button">&larr; Edit Details</button>
+        <button class="btn btn-primary" id="m_printBtn" type="button">&#128424; Print</button>
+      </div>
     </div>
 
-    <div id="formError" class="error"></div>
+    <div id="misLabelsWrap"></div>
 
-    <div class="btn-row">
-      <button class="btn btn-ghost" id="clearBtn" type="button">Clear</button>
-      <button class="btn btn-primary" id="generateBtn" type="button">Generate Labels</button>
-    </div>
   </div>
-
-  <div class="panel no-print" id="printPanel" style="display:none;">
-    <h2>Preview</h2>
-    <p class="preview-note" id="previewNote"></p>
-    <div class="btn-row">
-      <button class="btn btn-ghost" id="editBtn" type="button">&larr; Edit Details</button>
-      <button class="btn btn-primary" id="printBtn" type="button">🖨 Print</button>
-    </div>
-  </div>
-
-  <div id="labelsWrap"></div>
 
 </div>
 
 <script>
+  // ---------- Shared helpers ----------
   function pad2(n){ return String(n).padStart(2,'0'); }
 
   function formatDateDisplay(isoDate){
@@ -210,6 +360,44 @@
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
+  // ---------- Tab switching ----------
+  var ACTIVE_TAB = 'outlet'; // 'outlet' | 'mis'
+
+  function setActiveTab(tab){
+    ACTIVE_TAB = tab;
+    document.getElementById('tplOutletTab').classList.toggle('active', tab === 'outlet');
+    document.getElementById('tplMisTab').classList.toggle('active', tab === 'mis');
+    document.getElementById('tabBtnOutlet').classList.toggle('active', tab === 'outlet');
+    document.getElementById('tabBtnMis').classList.toggle('active', tab === 'mis');
+  }
+  document.getElementById('tabBtnOutlet').addEventListener('click', function(){ setActiveTab('outlet'); });
+  document.getElementById('tabBtnMis').addEventListener('click', function(){ setActiveTab('mis'); });
+
+  // Injects the correct @page rule right before printing, since the two
+  // tabs use different page sizes/margins and @page can't be scoped by
+  // CSS class in a reliably cross-browser way.
+  var pagePrintStyleEl = document.createElement('style');
+  pagePrintStyleEl.id = 'pagePrintStyle';
+  document.head.appendChild(pagePrintStyleEl);
+
+  function printOutlet(){
+    pagePrintStyleEl.textContent = '@page{ margin:12mm; }';
+    document.body.classList.add('printing-outlet');
+    document.body.classList.remove('printing-mis');
+    window.print();
+  }
+
+  function printMis(layout){
+    var size = layout === 'landscape' ? 'A4 landscape' : 'A4 portrait';
+    pagePrintStyleEl.textContent = '@page{ size:' + size + '; margin:0; }';
+    document.body.classList.add('printing-mis');
+    document.body.classList.remove('printing-outlet');
+    window.print();
+  }
+
+  // =========================================================
+  // TPL TO OUTLET (unchanged logic from the original tool)
+  // =========================================================
   var LABELS_PER_PAGE = 5;
 
   function buildLabel(data, index, total){
@@ -290,7 +478,7 @@
       ' (' + LABELS_PER_PAGE + ' per page) - CTN 1/' + total + ' through CTN ' + total + '/' + total + '.';
 
     document.getElementById('printPanel').style.display = 'block';
-    document.querySelector('.panel').scrollIntoView({ behavior: 'smooth' });
+    document.querySelector('#tplOutletTab .panel').scrollIntoView({ behavior: 'smooth' });
   });
 
   document.getElementById('clearBtn').addEventListener('click', function(){
@@ -310,9 +498,138 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
-  document.getElementById('printBtn').addEventListener('click', function(){
-    window.print();
+  document.getElementById('printBtn').addEventListener('click', printOutlet);
+
+  // =========================================================
+  // TPL TO MIS (new)
+  // =========================================================
+  // Block + page geometry, derived from the source workbook:
+  //   - Each label block is 5 rows tall (SEND TO / FROM / S2B REF NO. /
+  //     REMARK, with REMARK wrapping onto a 2nd row), 46.5pt per row in
+  //     the original sheet -> 5 * 46.5pt * 0.3528mm/pt = 82.03mm tall
+  //     at the LANDSCAPE sheet's near-100% print scale (98%).
+  //   - The POTRAIT sheet prints the same block at 71% scale, so its
+  //     block height is scaled down to roughly 82.03 * (71/98) = 59.4mm;
+  //     58.24mm is used here so 4 blocks + gaps fit the portrait page
+  //     with a touch of breathing room.
+  //   - Page margins match the workbook: 0.25in (6.35mm) left/right,
+  //     0.75in (19.05mm) top/bottom, on A4.
+  var MIS_LAYOUTS = {
+    landscape: { pageW: 297, pageH: 210, padTB: 19.05, padLR: 6.35, blockH: 82.03, perPage: 2 },
+    portrait:  { pageW: 210, pageH: 297, padTB: 19.05, padLR: 6.35, blockH: 58.24, perPage: 4 }
+  };
+  var GAP_MM = 6;
+  var FONT_RATIO = 12.7 / 82.03; // 36pt (12.7mm) at the landscape block height
+
+  var misLayout = 'landscape';
+
+  document.getElementById('m_layoutLandscapeBtn').addEventListener('click', function(){ setMisLayout('landscape'); });
+  document.getElementById('m_layoutPortraitBtn').addEventListener('click', function(){ setMisLayout('portrait'); });
+  function setMisLayout(layout){
+    misLayout = layout;
+    document.getElementById('m_layoutLandscapeBtn').classList.toggle('active', layout === 'landscape');
+    document.getElementById('m_layoutPortraitBtn').classList.toggle('active', layout === 'portrait');
+  }
+
+  function mm(v){ return v.toFixed(2) + 'mm'; }
+
+  function buildMisBlock(data, index, total, blockH){
+    var fontSizeMm = blockH * FONT_RATIO;
+    var blockStyle = 'height:' + mm(blockH) + ';font-size:' + mm(fontSizeMm) + ';';
+    return (
+      '<div class="mis-block" style="' + blockStyle + '">' +
+        '<div class="mis-cell label" style="grid-column:1;grid-row:1;">SEND TO&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</div>' +
+        '<div class="mis-cell value" style="grid-column:2;grid-row:1;">' + escapeHtml(data.sendTo) + '</div>' +
+        '<div class="mis-cell counter" style="grid-column:3;grid-row:1 / 3;">' + index + '</div>' +
+        '<div class="mis-cell counter" style="grid-column:4;grid-row:1 / 3;">/</div>' +
+        '<div class="mis-cell counter" style="grid-column:5;grid-row:1 / 3;">' + total + '</div>' +
+
+        '<div class="mis-cell label" style="grid-column:1;grid-row:2;">FROM :</div>' +
+        '<div class="mis-cell value" style="grid-column:2;grid-row:2;">' + escapeHtml(data.from) + '</div>' +
+
+        '<div class="mis-cell label" style="grid-column:1;grid-row:3;">S2B REF NO. :</div>' +
+        '<div class="mis-cell value" style="grid-column:2;grid-row:3;">' + escapeHtml(data.s2b) + '</div>' +
+        '<div class="mis-cell blank" style="grid-column:3 / 6;grid-row:3 / 5;"></div>' +
+
+        '<div class="mis-cell label" style="grid-column:1;grid-row:4;">REMARK :</div>' +
+        '<div class="mis-cell value wrap" style="grid-column:2;grid-row:4 / 6;">' + escapeHtml(data.remark) + '</div>' +
+      '</div>'
+    );
+  }
+
+  document.getElementById('m_generateBtn').addEventListener('click', function(){
+    var errEl = document.getElementById('m_formError');
+    errEl.textContent = '';
+
+    var data = {
+      sendTo: document.getElementById('m_sendTo').value.trim(),
+      from: document.getElementById('m_from').value.trim(),
+      s2b: document.getElementById('m_s2b').value.trim(),
+      remark: document.getElementById('m_remark').value.trim()
+    };
+    var total = parseInt(document.getElementById('m_total').value, 10);
+
+    if(!data.sendTo || !data.from || !data.s2b){
+      errEl.textContent = 'Please fill in Send To, From, and S2B Ref No.';
+      return;
+    }
+    if(!total || total < 1){
+      errEl.textContent = 'Please enter a valid Total Carton (1 or more).';
+      return;
+    }
+    if(total > 300){
+      errEl.textContent = 'That\'s a lot of cartons (' + total + ') - please confirm this is correct before generating.';
+      return;
+    }
+
+    var layout = MIS_LAYOUTS[misLayout];
+    var html = '';
+    var blocksOnPage = 0;
+
+    for(var i = 1; i <= total; i++){
+      if(blocksOnPage === 0){
+        html += '<div class="mis-page ' + misLayout + '" style="width:' + mm(layout.pageW) + ';height:' + mm(layout.pageH) +
+          ';padding:' + mm(layout.padTB) + ' ' + mm(layout.padLR) + ';">';
+      }
+      html += buildMisBlock(data, i, total, layout.blockH);
+      blocksOnPage++;
+      if(blocksOnPage === layout.perPage || i === total){
+        html += '</div>'; // close mis-page
+        blocksOnPage = 0;
+      }
+    }
+
+    document.getElementById('misLabelsWrap').innerHTML = html;
+    document.getElementById('misLabelsWrap').classList.add('visible');
+
+    var pageCount = Math.ceil(total / layout.perPage);
+    document.getElementById('m_previewNote').textContent =
+      total + ' label' + (total === 1 ? '' : 's') + ' generated across ' + pageCount + ' page' + (pageCount === 1 ? '' : 's') +
+      ' (' + (misLayout === 'landscape' ? 'landscape, 2 per page' : 'portrait, 4 per page') + ').';
+
+    document.getElementById('m_printPanel').style.display = 'block';
+    document.querySelector('#tplMisTab .panel').scrollIntoView({ behavior: 'smooth' });
   });
+
+  document.getElementById('m_clearBtn').addEventListener('click', function(){
+    ['m_sendTo','m_from','m_s2b','m_remark','m_total'].forEach(function(id){
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('m_from').value = 'SHBN';
+    setMisLayout('landscape');
+    document.getElementById('m_formError').textContent = '';
+    document.getElementById('m_printPanel').style.display = 'none';
+    document.getElementById('misLabelsWrap').classList.remove('visible');
+    document.getElementById('misLabelsWrap').innerHTML = '';
+  });
+
+  document.getElementById('m_editBtn').addEventListener('click', function(){
+    document.getElementById('m_printPanel').style.display = 'none';
+    document.getElementById('misLabelsWrap').classList.remove('visible');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  document.getElementById('m_printBtn').addEventListener('click', function(){ printMis(misLayout); });
 </script>
 
 </body>
