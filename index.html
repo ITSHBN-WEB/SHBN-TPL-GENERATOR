@@ -170,7 +170,7 @@
     width:100%;
     border:0.6mm solid #000;
     display:grid;
-    grid-template-columns:30.16% 46.57% 7.76% 7.76% 7.76%;
+    grid-template-columns:34% 43.01% 7.66% 7.66% 7.67%;
     grid-template-rows:repeat(5, 1fr);
     font-family:Calibri,"Segoe UI",Arial,Helvetica,sans-serif;
     font-weight:700;
@@ -186,11 +186,11 @@
     white-space:nowrap;
     padding:0 1.4%;
   }
-  .mis-cell.label{ justify-content:space-between; }
-  .mis-cell.label span{ overflow:hidden; text-overflow:ellipsis; }
-  .mis-cell.label span:last-child{ flex:0 0 auto; padding-left:0.6em; }
-  .mis-cell.value{ justify-content:flex-start; text-align:left; }
-  .mis-cell.value.wrap{ white-space:normal; line-height:1.12; }
+  .mis-cell.label{ justify-content:space-between; border:none; font-size:76%; }
+  .mis-cell.label span{ white-space:nowrap; }
+  .mis-cell.label span:last-child{ flex:0 0 auto; padding-left:0.5em; }
+  .mis-cell.value{ justify-content:flex-start; text-align:left; align-items:center; border:none; }
+  .mis-cell.value.wrap{ white-space:normal; line-height:1.12; align-items:flex-start; padding-top:0.15em; }
   .mis-cell.counter{ justify-content:center; text-align:center; border:0.4mm solid #000; }
 
   @media print{
